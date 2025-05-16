@@ -1,0 +1,123 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\school_mediator_bot.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:school_mediator_bot.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 270,
+          "SelectedChildIndex": 11,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{74946827-37a0-11d2-a273-00c04f8ef4ff}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{fbcae063-e2c0-4ab1-a516-996ea3dafb72}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{e8b06f52-6d01-11d2-aa7d-00c04f990343}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "FileSearchService.cs",
+              "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
+              "RelativeDocumentMoniker": "FileSearchService.cs",
+              "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
+              "RelativeToolTip": "FileSearchService.cs",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAAAHcAAAAFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T09:33:02.9Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DataService.cs",
+              "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\DataService.cs",
+              "RelativeDocumentMoniker": "DataService.cs",
+              "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\DataService.cs",
+              "RelativeToolTip": "DataService.cs",
+              "ViewState": "AQIAABcAAAAAAAAAAAAQwIgAAAAOAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T08:00:40.967Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AQIAAOcAAAAAAAAAAAAwwAQBAABbAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T07:43:17.168Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "School_mediator_bot",
+              "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\School_mediator_bot.csproj",
+              "RelativeDocumentMoniker": "School_mediator_bot.csproj",
+              "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\School_mediator_bot.csproj",
+              "RelativeToolTip": "School_mediator_bot.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-05-16T07:58:11.693Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

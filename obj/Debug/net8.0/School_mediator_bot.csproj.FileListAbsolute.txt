@@ -1,0 +1,5 @@
+C:\Users\79025\source\repos\2 курс\3 семестр\School_mediator_bot\obj\Debug\net8.0\School_mediator_bot.csproj.AssemblyReference.cache
+C:\Users\79025\source\repos\2 курс\3 семестр\School_mediator_bot\obj\Debug\net8.0\School_mediator_bot.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\79025\source\repos\2 курс\3 семестр\School_mediator_bot\obj\Debug\net8.0\School_mediator_bot.AssemblyInfoInputs.cache
+C:\Users\79025\source\repos\2 курс\3 семестр\School_mediator_bot\obj\Debug\net8.0\School_mediator_bot.AssemblyInfo.cs
+C:\Users\79025\source\repos\2 курс\3 семестр\School_mediator_bot\obj\Debug\net8.0\School_mediator_bot.csproj.CoreCompileInputs.cache
