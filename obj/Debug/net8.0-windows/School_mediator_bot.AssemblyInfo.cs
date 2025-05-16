@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("School_mediator_bot")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+272f66dc84dd4b33a04d7d2c533bda43fa59a412")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b755b098a097e23989af8e9bbfc6f4aa3e42c0b7")]
 [assembly: System.Reflection.AssemblyProductAttribute("School_mediator_bot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("School_mediator_bot")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

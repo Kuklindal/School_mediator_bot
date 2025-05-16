@@ -20,15 +20,15 @@ namespace ConflictResolutionBot
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
         static async Task Main(string[] args)
         {
-            // Replace with your bot token
-            string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAEnwOty67shYil9ubGmAl6-OEKUPxIWAIM";
-
+            string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
             botClient = new TelegramBotClient(botToken);
 
-            // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
+            // Удаляем вебхук перед стартом
+            await botClient.DeleteWebhook();
+
             var receiverOptions = new ReceiverOptions
             {
-                AllowedUpdates = Array.Empty<UpdateType>() // receive all update types
+                AllowedUpdates = Array.Empty<UpdateType>()
             };
 
             botClient.StartReceiving(
@@ -42,7 +42,6 @@ namespace ConflictResolutionBot
             Console.WriteLine($"Start listening for @{me.Username}");
             Console.ReadLine();
 
-            // Send cancellation request to stop bot
             cts.Cancel();
         }
 
@@ -167,9 +166,9 @@ namespace ConflictResolutionBot
         {
             string text = "📚 *Рекомендуемая литература по конфликтологии*\n\n";
             int count = 1;
-            foreach(LiteratureItem item in DataService.Literature)
+            foreach (LiteratureItem item in DataService.Literature)
             {
-                if(count > 5)
+                if (count > 5)
                 {
                     break;
                 }
