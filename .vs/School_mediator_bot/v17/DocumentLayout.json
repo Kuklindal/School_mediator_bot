@@ -7,15 +7,15 @@
       "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|c:\\users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\school_mediator_bot\\school_mediator_bot.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\school_mediator_bot.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
       "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:school_mediator_bot.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     }
   ],
@@ -74,8 +74,7 @@
               "RelativeToolTip": "FileSearchService.cs",
               "ViewState": "AQIAAAMAAAAAAAAAAAAAAHcAAAAFAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-15T09:33:02.9Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-15T09:33:02.9Z"
             },
             {
               "$type": "Document",
@@ -87,8 +86,7 @@
               "RelativeToolTip": "DataService.cs",
               "ViewState": "AQIAABcAAAAAAAAAAAAQwIgAAAAOAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-15T08:00:40.967Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-15T08:00:40.967Z"
             },
             {
               "$type": "Document",
@@ -112,8 +110,7 @@
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\School_mediator_bot.csproj",
               "RelativeToolTip": "School_mediator_bot.csproj",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-05-16T07:58:11.693Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-16T07:58:11.693Z"
             }
           ]
         }
