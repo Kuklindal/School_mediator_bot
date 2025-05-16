@@ -20,6 +20,7 @@ namespace ConflictResolutionBot
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
         static async Task Main(string[] args)
         {
+            using var lockFile = File.Open("bot.lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
             botClient = new TelegramBotClient(botToken);
 
@@ -38,10 +39,12 @@ namespace ConflictResolutionBot
                 cancellationToken: cts.Token
             );
 
-            var me = await botClient.GetMe();
-            Console.WriteLine($"Start listening for @{me.Username}");
-            Console.ReadLine();
+            Console.WriteLine($"Бот запущен в {DateTime.Now}");
+            await Task.Delay(-1, cts.Token); // Бесконечное ожидание
 
+            // При получении Ctrl+C или SIGTERM:
+            Console.WriteLine($"Остановка бота в {DateTime.Now}");
+            await botClient.Close(); // Корректное завершение
             cts.Cancel();
         }
 

@@ -7,12 +7,12 @@
       "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:dataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2DBB31B-3DF2-4438-83C0-CC7F551CD58E}|School_mediator_bot.csproj|solutionrelative:filesearchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -62,26 +62,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "FileSearchService.cs",
               "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
               "RelativeDocumentMoniker": "FileSearchService.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
               "RelativeToolTip": "FileSearchService.cs",
-              "ViewState": "AQIAAAkAAAAAAAAAAAAUwBUAAAANAAAA",
+              "ViewState": "AQIAAFQAAAAAAAAAAADwv3oAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-15T09:33:02.9Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "DataService.cs",
               "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\DataService.cs",
               "RelativeDocumentMoniker": "DataService.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\DataService.cs",
               "RelativeToolTip": "DataService.cs",
-              "ViewState": "AQIAAEYBAAAAAAAAAAAAAIgAAAAOAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAIgAAAAOAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-15T08:00:40.967Z",
               "EditorCaption": ""
@@ -94,7 +94,7 @@
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AQIAAOcAAAAAAAAAAADgv/0AAAAJAAAA",
+              "ViewState": "AQIAAA8AAAAAAAAAAAAAACcAAAAOAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-15T07:43:17.168Z",
               "EditorCaption": ""
