@@ -18,12 +18,13 @@ namespace ConflictResolutionBot
     class Program
     {
         private static TelegramBotClient? botClient;
-        private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
-        private static FileSearchService _fileSearchService = new FileSearchService("/root/mediator/Literature");
+        private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new();
+        private static FileSearchService _fileSearchService = new("/root/mediator/Literature");
         private static HttpListener? _listener;
         private static string _url = "http://0.0.0.0:8443/";
-        private static bool _isRunning = true;
-        private static ManualResetEvent _exitEvent = new ManualResetEvent(false);
+        private static volatile bool _isRunning = true;
+        private static readonly ManualResetEvent _exitEvent = new(false);
+        private static Task? _processingTask;
         static async Task Main(string[] args)
         {
             try
@@ -31,94 +32,43 @@ namespace ConflictResolutionBot
                 string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
                 botClient = new TelegramBotClient(botToken);
 
-                // IP вашего сервера и порт для вебхуков
-                string serverIp = "82.147.71.182";
-                int port = 8443;
-                string webhookUrl = $"https://{serverIp}:{port}/bot";
+                // Настройка вебхука
+                string webhookUrl = "https://82.147.71.182:8443/bot";
+                await botClient.DeleteWebhook();
 
-                // Настраиваем локальный сервер
-                _url = $"http://localhost:{port}/";
+                // Настройка HTTP listener
                 _listener = new HttpListener();
                 _listener.Prefixes.Add(_url);
-
-                // Удаляем старый вебхук
-                await botClient.DeleteWebhook();
-
-                // Путь к сертификату
-                string certPath = "/root/certs/cert.pem";
-
-                // Устанавливаем новый вебхук с сертификатом
-                if (File.Exists(certPath))
-                {
-                    using (var certStream = File.OpenRead(certPath))
-                    {
-                        await botClient.SetWebhook(
-                            url: webhookUrl,
-                            certificate: new InputFileStream(certStream, "cert.pem")
-                        );
-                    }
-                    Console.WriteLine($"Вебхук установлен на {webhookUrl} с сертификатом");
-                }
-                else
-                {
-                    await botClient.SetWebhook(webhookUrl);
-                    Console.WriteLine($"Вебхук установлен на {webhookUrl} без сертификата");
-                }
-
-                // Проверяем информацию о вебхуке
-                var webhookInfo = await botClient.GetWebhookInfo();
-                Console.WriteLine($"Webhook URL: {webhookInfo.Url}");
-                Console.WriteLine($"Webhook has certificate: {webhookInfo.HasCustomCertificate}");
-                if (webhookInfo.LastErrorDate != null)
-                {
-                    Console.WriteLine($"Last error: {webhookInfo.LastErrorDate} - {webhookInfo.LastErrorMessage}");
-                }
-
-                var me = await botClient.GetMe();
-                Console.WriteLine($"Start listening for @{me.Username}");
-
-                // Запускаем сервер
                 _listener.Start();
-                Console.WriteLine($"Сервер запущен на {_url}");
 
-                // Обработка сигналов завершения
-                Console.CancelKeyPress += (sender, e) => {
-                    e.Cancel = true;
-                    _isRunning = false;
-                    _exitEvent.Set();
-                };
+                // Установка вебхука с сертификатом
+                using (var certStream = File.OpenRead("/root/certs/cert.pem"))
+                {
+                    await botClient.SetWebhook(
+                        url: webhookUrl,
+                        certificate: new InputFileStream(certStream, "cert.pem")
+                    );
+                }
 
-                // Запускаем обработку запросов в отдельном потоке
-                Task.Run(async () => {
-                    while (_isRunning)
-                    {
-                        try
-                        {
-                            var context = await _listener.GetContextAsync();
-                            _ = ProcessRequestAsync(context);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Ошибка при обработке запроса: {ex.Message}");
-                            File.AppendAllText("/var/log/mybot-error.log",
-                                $"{DateTime.Now}: {ex.Message}\n{ex.StackTrace}\n\n");
-                        }
-                    }
-                });
-                // Блокируем завершение программы
+                // Запуск обработки запросов
+                _processingTask = Task.Run(ProcessRequests);
+
+                // Обработка Ctrl+C
+                Console.CancelKeyPress += OnCancelKeyPress;
                 _exitEvent.WaitOne();
 
-                // Код очистки при завершении
-                _listener.Stop();
+                // Очистка ресурсов
+                _isRunning = false;
+                _listener?.Stop();
+                if (_processingTask != null)
+                    await _processingTask;
                 await botClient.DeleteWebhook();
-                Console.WriteLine("Bot stopped");
+                Console.WriteLine("Bot stopped gracefully.");
             }
             catch (Exception ex)
             {
-                // Логируем ошибку в файл
-                File.AppendAllText("/var/log/mybot-error.log",
-                    $"{DateTime.Now}: {ex.Message}\n{ex.StackTrace}\n\n");
-                throw; // Перебрасываем исключение для systemd
+                File.AppendAllText("/var/log/mybot-error.log", $"{DateTime.Now}: {ex}\n\n");
+                throw;
             }
         }
         private static async Task StartWebhookServer()
@@ -156,7 +106,32 @@ namespace ConflictResolutionBot
             await botClient.DeleteWebhook();
             Console.WriteLine("Сервер остановлен");
         }
-
+        private static void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            _isRunning = false;
+            _exitEvent.Set();
+            _listener?.Stop();
+        }
+        private static async Task ProcessRequests()
+        {
+            while (_isRunning)
+            {
+                try
+                {
+                    var context = await _listener!.GetContextAsync();
+                    _ = ProcessRequestAsync(context);
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Request error: {ex.Message}");
+                }
+            }
+        }
         private static async Task ProcessRequestAsync(HttpListenerContext context)
         {
             try
