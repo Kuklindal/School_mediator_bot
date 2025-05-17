@@ -30,7 +30,7 @@ namespace ConflictResolutionBot
             {
                 AllowedUpdates = Array.Empty<UpdateType>() // receive all update types
             };
-
+            await botClient.DeleteWebhook();
             botClient.StartReceiving(
                 updateHandler: HandleUpdateAsync,
                 errorHandler: HandleErrorAsync,
@@ -249,7 +249,7 @@ namespace ConflictResolutionBot
                 cancellationToken: cancellationToken);
         }
 
-        private static FileSearchService _fileSearchService = new FileSearchService("C:/Users/79025/source/repos/2 курс/3 семестр/School_mediator_bot/Literature");
+        private static FileSearchService _fileSearchService = new FileSearchService("/root/mediator/Literature");
 
         private static async Task HandleSearchCommand(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken, Message message)
         {
