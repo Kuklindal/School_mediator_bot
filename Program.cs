@@ -20,30 +20,55 @@ namespace ConflictResolutionBot
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
         static async Task Main(string[] args)
         {
-            // Replace with your bot token
-            string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
-
-            botClient = new TelegramBotClient(botToken);
-
-            // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
-            var receiverOptions = new ReceiverOptions
+            try
             {
-                AllowedUpdates = Array.Empty<UpdateType>() // receive all update types
-            };
-            await botClient.DeleteWebhook();
-            botClient.StartReceiving(
-                updateHandler: HandleUpdateAsync,
-                errorHandler: HandleErrorAsync,
-                receiverOptions: receiverOptions,
-                cancellationToken: cts.Token
-            );
+                // Проверка на дублирующиеся процессы
+                if (System.Diagnostics.Process.GetProcessesByName(
+                    System.Diagnostics.Process.GetCurrentProcess().ProcessName).Length > 1)
+                {
+                    Console.WriteLine("⚠️ Bot is already running!");
+                    return;
+                }
 
-            var me = await botClient.GetMe();
-            Console.WriteLine($"Start listening for @{me.Username}");
-            Console.ReadLine();
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "YOUR_TOKEN";
+                botClient = new TelegramBotClient(botToken);
 
-            // Send cancellation request to stop bot
-            cts.Cancel();
+                var receiverOptions = new ReceiverOptions
+                {
+                    AllowedUpdates = Array.Empty<UpdateType>()
+                };
+
+                await botClient.DeleteWebhook();
+
+                // Запускаем обработчик отмены
+                cts = new CancellationTokenSource();
+                Console.CancelKeyPress += (sender, e) =>
+                {
+                    e.Cancel = true;
+                    cts.Cancel();
+                };
+
+                botClient.StartReceiving(
+                    updateHandler: HandleUpdateAsync,
+                    errorHandler: HandleErrorAsync,
+                    receiverOptions: receiverOptions,
+                    cancellationToken: cts.Token
+                );
+
+                var me = await botClient.GetMe();
+                Console.WriteLine($"Bot @{me.Username} started");
+
+                // Бесконечное ожидание
+                await Task.Delay(-1, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Bot stopped gracefully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Critical error: {ex}");
+            }
         }
 
         private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
