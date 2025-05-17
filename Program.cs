@@ -21,7 +21,7 @@ namespace ConflictResolutionBot
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
         private static FileSearchService _fileSearchService = new FileSearchService("/root/mediator/Literature");
         private static HttpListener? _listener;
-        private static string _url = "http://localhost:8443/";
+        private static string _url = "http://+:8443/";
         private static bool _isRunning = true;
         private static ManualResetEvent _exitEvent = new ManualResetEvent(false);
         static async Task Main(string[] args)
