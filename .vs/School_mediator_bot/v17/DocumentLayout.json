@@ -22,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 270,
-          "SelectedChildIndex": 11,
+          "SelectedChildIndex": 10,
           "Children": [
             {
               "$type": "Bookmark",
@@ -62,18 +62,6 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "FileSearchService.cs",
-              "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
-              "RelativeDocumentMoniker": "FileSearchService.cs",
-              "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
-              "RelativeToolTip": "FileSearchService.cs",
-              "ViewState": "AQIAAFQAAAAAAAAAAADwv3oAAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-15T09:33:02.9Z"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
               "Title": "DataService.cs",
               "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\DataService.cs",
@@ -92,10 +80,22 @@
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AQIAABoAAAAAAAAAAAAiwCgAAAAtAAAA",
+              "ViewState": "AQIAABAAAAAAAAAAAAAqwBkAAABAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-15T07:43:17.168Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "FileSearchService.cs",
+              "DocumentMoniker": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
+              "RelativeDocumentMoniker": "FileSearchService.cs",
+              "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
+              "RelativeToolTip": "FileSearchService.cs",
+              "ViewState": "AQIAAFQAAAAAAAAAAADwv3oAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T09:33:02.9Z"
             }
           ]
         }
