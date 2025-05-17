@@ -19,7 +19,7 @@ namespace ConflictResolutionBot
     {
         private static TelegramBotClient? botClient;
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
-        private static FileSearchService _fileSearchService = new FileSearchService("C:/Users/79025/source/repos/2 курс/3 семестр/School_mediator_bot/Literature");
+        private static FileSearchService _fileSearchService = new FileSearchService("/root/mediator/Literature");
         private static HttpListener? _listener;
         private static string _url = "http://localhost:8443/";
         private static bool _isRunning = true;
@@ -28,7 +28,7 @@ namespace ConflictResolutionBot
         {
             try
             {
-                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "YOUR_BOT_TOKEN";
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
                 botClient = new TelegramBotClient(botToken);
 
                 // IP вашего сервера и порт для вебхуков
