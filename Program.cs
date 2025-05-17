@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
-using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -16,87 +18,243 @@ namespace ConflictResolutionBot
     class Program
     {
         private static TelegramBotClient? botClient;
-        private static CancellationTokenSource cts = new CancellationTokenSource();
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
+        private static FileSearchService _fileSearchService = new FileSearchService("C:/Users/79025/source/repos/2 курс/3 семестр/School_mediator_bot/Literature");
+        private static HttpListener? _listener;
+        private static string _url = "http://localhost:8443/";
+        private static bool _isRunning = true;
+        private static ManualResetEvent _exitEvent = new ManualResetEvent(false);
         static async Task Main(string[] args)
         {
-            using var lockFile = File.Open("bot.lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
-            botClient = new TelegramBotClient(botToken);
-
-            // Удаляем вебхук перед стартом
-            await botClient.DeleteWebhook();
-
-            var receiverOptions = new ReceiverOptions
+            try
             {
-                AllowedUpdates = Array.Empty<UpdateType>()
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "YOUR_BOT_TOKEN";
+                botClient = new TelegramBotClient(botToken);
+
+                // IP вашего сервера и порт для вебхуков
+                string serverIp = "82.147.71.182";
+                int port = 8443;
+                string webhookUrl = $"https://{serverIp}:{port}/bot";
+
+                // Настраиваем локальный сервер
+                _url = $"http://localhost:{port}/";
+                _listener = new HttpListener();
+                _listener.Prefixes.Add(_url);
+
+                // Удаляем старый вебхук
+                await botClient.DeleteWebhook();
+
+                // Путь к сертификату
+                string certPath = "/root/certs/cert.pem";
+
+                // Устанавливаем новый вебхук с сертификатом
+                if (File.Exists(certPath))
+                {
+                    using (var certStream = File.OpenRead(certPath))
+                    {
+                        await botClient.SetWebhook(
+                            url: webhookUrl,
+                            certificate: new InputFileStream(certStream, "cert.pem")
+                        );
+                    }
+                    Console.WriteLine($"Вебхук установлен на {webhookUrl} с сертификатом");
+                }
+                else
+                {
+                    await botClient.SetWebhook(webhookUrl);
+                    Console.WriteLine($"Вебхук установлен на {webhookUrl} без сертификата");
+                }
+
+                // Проверяем информацию о вебхуке
+                var webhookInfo = await botClient.GetWebhookInfo();
+                Console.WriteLine($"Webhook URL: {webhookInfo.Url}");
+                Console.WriteLine($"Webhook has certificate: {webhookInfo.HasCustomCertificate}");
+                if (webhookInfo.LastErrorDate != null)
+                {
+                    Console.WriteLine($"Last error: {webhookInfo.LastErrorDate} - {webhookInfo.LastErrorMessage}");
+                }
+
+                var me = await botClient.GetMe();
+                Console.WriteLine($"Start listening for @{me.Username}");
+
+                // Запускаем сервер
+                _listener.Start();
+                Console.WriteLine($"Сервер запущен на {_url}");
+
+                // Обработка сигналов завершения
+                Console.CancelKeyPress += (sender, e) => {
+                    e.Cancel = true;
+                    _isRunning = false;
+                    _exitEvent.Set();
+                };
+
+                // Запускаем обработку запросов в отдельном потоке
+                Task.Run(async () => {
+                    while (_isRunning)
+                    {
+                        try
+                        {
+                            var context = await _listener.GetContextAsync();
+                            _ = ProcessRequestAsync(context);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Ошибка при обработке запроса: {ex.Message}");
+                            File.AppendAllText("/var/log/mybot-error.log",
+                                $"{DateTime.Now}: {ex.Message}\n{ex.StackTrace}\n\n");
+                        }
+                    }
+                });
+                // Блокируем завершение программы
+                _exitEvent.WaitOne();
+
+                // Код очистки при завершении
+                _listener.Stop();
+                await botClient.DeleteWebhook();
+                Console.WriteLine("Bot stopped");
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку в файл
+                File.AppendAllText("/var/log/mybot-error.log",
+                    $"{DateTime.Now}: {ex.Message}\n{ex.StackTrace}\n\n");
+                throw; // Перебрасываем исключение для systemd
+            }
+        }
+        private static async Task StartWebhookServer()
+        {
+            // Создаем HTTP-сервер
+            _listener = new HttpListener();
+            _listener.Prefixes.Add(_url);
+            _listener.Start();
+            Console.WriteLine($"Сервер запущен на {_url}");
+            Console.WriteLine("Нажмите Ctrl+C для остановки");
+
+            // Обработка Ctrl+C для корректного завершения
+            Console.CancelKeyPress += (sender, e) => {
+                e.Cancel = true;
+                _isRunning = false;
+                Console.WriteLine("Останавливаем сервер...");
             };
 
-            botClient.StartReceiving(
-                updateHandler: HandleUpdateAsync,
-                errorHandler: HandleErrorAsync,
-                receiverOptions: receiverOptions,
-                cancellationToken: cts.Token
-            );
+            // Обрабатываем входящие запросы
+            while (_isRunning)
+            {
+                try
+                {
+                    var context = await _listener.GetContextAsync();
+                    _ = ProcessRequestAsync(context);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка при обработке запроса: {ex.Message}");
+                }
+            }
 
-            Console.WriteLine($"Бот запущен в {DateTime.Now}");
-            await Task.Delay(-1, cts.Token); // Бесконечное ожидание
-
-            // При получении Ctrl+C или SIGTERM:
-            Console.WriteLine($"Остановка бота в {DateTime.Now}");
-            await botClient.Close(); // Корректное завершение
-            cts.Cancel();
+            // Останавливаем сервер и удаляем вебхук
+            _listener.Stop();
+            await botClient.DeleteWebhook();
+            Console.WriteLine("Сервер остановлен");
         }
 
-        private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        private static async Task ProcessRequestAsync(HttpListenerContext context)
         {
-            // Only process Message updates
-            if (update.Message is not { } message)
-                return;
-
-            // Only process text messages
-            if (message.Text is not { } messageText)
-                return;
-
-            var chatId = message.Chat.Id;
-            if (_awaitingQuery.TryGetValue(chatId, out bool isWaiting) && isWaiting)
+            try
             {
-                _awaitingQuery.TryRemove(chatId, out _);
-                await ProcessSearchQuery(botClient, chatId, messageText, cancellationToken);
-                return;
+                // Проверяем, что это запрос к нашему боту
+                if (context.Request.Url.AbsolutePath == "/bot")
+                {
+                    // Читаем тело запроса
+                    string requestBody;
+                    using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
+                    {
+                        requestBody = await reader.ReadToEndAsync();
+                    }
+
+                    // Десериализуем обновление
+                    var update = JsonConvert.DeserializeObject<Update>(requestBody);
+                    if (update != null)
+                    {
+                        // Обрабатываем обновление асинхронно
+                        _ = Task.Run(() => HandleUpdateAsync(update));
+                    }
+
+                    // Отправляем ответ
+                    context.Response.StatusCode = 200;
+                    byte[] buffer = Encoding.UTF8.GetBytes("OK");
+                    context.Response.OutputStream.Write(buffer, 0, buffer.Length);
+                }
+                else
+                {
+                    // Для других путей отправляем 404
+                    context.Response.StatusCode = 404;
+                }
             }
-            Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
-            if (message.ReplyToMessage?.Text?.Contains("Введите поисковый запрос") == true)
+            catch (Exception ex)
             {
-                string searchQuery = message.Text.StartsWith("/find ")
-                    ? message.Text.Substring(6)
-                    : message.Text;
-
-                await SearchInfoAsync(botClient, chatId, searchQuery, cancellationToken);
-                return;
+                Console.WriteLine($"Ошибка при обработке запроса: {ex.Message}");
+                context.Response.StatusCode = 500;
             }
-            // Handle commands
-            if (messageText.StartsWith("/"))
+            finally
             {
-                await HandleCommandAsync(botClient, message, cancellationToken);
-                return;
+                context.Response.Close();
             }
+        }
 
-            // Handle regular messages or keywords
-            if (messageText.Contains("конфликт", StringComparison.OrdinalIgnoreCase))
+        private static async Task HandleUpdateAsync(Update update)
+        {
+            try
             {
+                // Only process Message updates
+                if (update.Message is not { } message)
+                    return;
+
+                // Only process text messages
+                if (message.Text is not { } messageText)
+                    return;
+
+                var chatId = message.Chat.Id;
+                if (_awaitingQuery.TryGetValue(chatId, out bool isWaiting) && isWaiting)
+                {
+                    _awaitingQuery.TryRemove(chatId, out _);
+                    await ProcessSearchQuery(botClient, chatId, messageText, CancellationToken.None);
+                    return;
+                }
+                Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+                if (message.ReplyToMessage?.Text?.Contains("Введите поисковый запрос") == true)
+                {
+                    string searchQuery = message.Text.StartsWith("/find ")
+                        ? message.Text.Substring(6)
+                        : message.Text;
+
+                    await SearchInfoAsync(botClient, chatId, searchQuery, CancellationToken.None);
+                    return;
+                }
+                // Handle commands
+                if (messageText.StartsWith("/"))
+                {
+                    await HandleCommandAsync(botClient, message, CancellationToken.None);
+                    return;
+                }
+
+                // Handle regular messages or keywords
+                if (messageText.Contains("конфликт", StringComparison.OrdinalIgnoreCase))
+                {
+                    await botClient.SendMessage(
+                        chatId: chatId,
+                        text: "Я заметил, что вы интересуетесь темой конфликтов. Могу предложить вам изучить раздел /методики для практических упражнений или /литература для теоретических материалов.");
+                    return;
+                }
+
+                // Default response for unrecognized messages
                 await botClient.SendMessage(
                     chatId: chatId,
-                    text: "Я заметил, что вы интересуетесь темой конфликтов. Могу предложить вам изучить раздел /методики для практических упражнений или /литература для теоретических материалов.",
-                    cancellationToken: cancellationToken);
-                return;
+                    text: "Не совсем понимаю ваш запрос. Пожалуйста, воспользуйтесь командами из меню или напишите /start для получения списка доступных команд.");
             }
-
-            // Default response for unrecognized messages
-            await botClient.SendMessage(
-                chatId: chatId,
-                text: "Не совсем понимаю ваш запрос. Пожалуйста, воспользуйтесь командами из меню или напишите /start для получения списка доступных команд.",
-                cancellationToken: cancellationToken);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обработке обновления: {ex.Message}");
+            }
         }
 
         private static async Task HandleCommandAsync(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
@@ -146,7 +304,6 @@ namespace ConflictResolutionBot
                         cancellationToken: cancellationToken);
                     break;
             }
-
         }
 
         private static async Task SendStartMessageAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
@@ -251,8 +408,6 @@ namespace ConflictResolutionBot
                 cancellationToken: cancellationToken);
         }
 
-        private static FileSearchService _fileSearchService = new FileSearchService("/root/h/mediator/Literature");
-
         private static async Task HandleSearchCommand(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken, Message message)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -267,6 +422,7 @@ namespace ConflictResolutionBot
             }
             await ProcessSearchQuery(botClient, chatId, query, cancellationToken);
         }
+
         private static async Task ProcessSearchQuery(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken)
         {
             var processingMessage = await botClient.SendMessage(
@@ -340,8 +496,6 @@ namespace ConflictResolutionBot
                 }
                 count++;
                 response.AppendLine($"{result.FileName}");
-                //if (result.PageNumber > 0) response.AppendLine($"📖 Страница: {result.PageNumber}");
-                //response.AppendLine($"💬 Найдено: {result.Excerpt}");
                 response.AppendLine("------------------------");
             }
             await botClient.SendMessage(
@@ -350,6 +504,7 @@ namespace ConflictResolutionBot
                 parseMode: ParseMode.Markdown,
                 cancellationToken: cancellationToken);
         }
+
         private static async Task SearchInfoAsync(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -450,18 +605,6 @@ namespace ConflictResolutionBot
                       "Для получения конкретных упражнений используйте команду /methods",
                 parseMode: ParseMode.Markdown,
                 cancellationToken: cancellationToken);
-        }
-
-        private static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
-        {
-            var ErrorMessage = exception switch
-            {
-                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString()
-            };
-
-            Console.WriteLine(ErrorMessage);
-            return Task.CompletedTask;
         }
     }
 }
