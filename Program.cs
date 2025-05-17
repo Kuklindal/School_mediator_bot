@@ -21,7 +21,7 @@ namespace ConflictResolutionBot
         static async Task Main(string[] args)
         {
             // Replace with your bot token
-            string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAEnwOty67shYil9ubGmAl6-OEKUPxIWAIM";
+            string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
 
             botClient = new TelegramBotClient(botToken);
 
