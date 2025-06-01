@@ -30,7 +30,7 @@ namespace ConflictResolutionBot
                     return;
                 }
 
-                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "";
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
                 botClient = new TelegramBotClient(botToken);
 
                 var receiverOptions = new ReceiverOptions
@@ -73,19 +73,21 @@ namespace ConflictResolutionBot
 
         private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
+            Console.WriteLine($"Update type: {update.Type}");
             // Only process Message updates
+            if (update.CallbackQuery is CallbackQuery)
+            {
+                var callbackQuery = update.CallbackQuery;
+                await HandleCallbackQueryAsync(botClient, callbackQuery);
+                return;
+            }
             if (update.Message is not { } message)
                 return;
 
             // Only process text messages
             if (message.Text is not { } messageText)
                 return;
-            if (update.CallbackQuery is { } callbackQuery)
-            {
-                Console.WriteLine(callbackQuery.Data.ToString() + "111");
-                await HandleCallbackQueryAsync(botClient, callbackQuery);
-                return;
-            }
+
             var chatId = message.Chat.Id;
             if (_awaitingQuery.TryGetValue(chatId, out bool isWaiting) && isWaiting)
             {
@@ -246,22 +248,22 @@ namespace ConflictResolutionBot
             {
                 new []
                 {
-                    InlineKeyboardButton.WithCallbackData("Психологический тренинг - «Пробуждение»", "callback1"),
-                    InlineKeyboardButton.WithCallbackData("Методика управления конфликтами", "callback2"),
-                    InlineKeyboardButton.WithCallbackData("Формирование конфликтологической компетентности", "callback3")
+                    InlineKeyboardButton.WithCallbackData("1", "callback1"),
+                    InlineKeyboardButton.WithCallbackData("2", "callback2"),
+                    InlineKeyboardButton.WithCallbackData("3", "callback3")
                 }
             });
 
             await botClient.SendMessage(
                 chatId: chatId,
                 text: "🛠 *Упражнения и тренинги для развития конфликтологической компетентности*\n\n" +
-                      "🔸 *Психологический тренинг - «Пробуждение»*\n" +
+                      "1. 🔸 *Психологический тренинг - «Пробуждение»*\n" +
                       "Цель: повышение психологической компетентности педагогов в вопросах воспитания и развитие эффективных навыков коммуникации с коллегами и  родителями.\n\n" +
-                      "🔸 *«Методика управления конфликтами»*\n" +
-                      "Цель: научить слушателей анализировать конфликт, понимать его и уметь управлять им, применяя эффективные поведенческие стратегии в профилактике и разрешении конфликтных ситуаций." +
-                      "🔸 *«Формирование конфликтологической компетентности»*\n" +
+                      "2. 🔸 *«Методика управления конфликтами»*\n" +
+                      "Цель: научить слушателей анализировать конфликт, понимать его и уметь управлять им, применяя эффективные поведенческие стратегии в профилактике и разрешении конфликтных ситуаций.\n\n" +
+                      "3. 🔸 *«Формирование конфликтологической компетентности»*\n" +
                       "Цель: предоставление возможности участникам тренинга получить опыт конструктивного решения конфликтных ситуаций.\n\n" +
-                      "📥 Хотите скачать какую-нибудь методичку? Выберите книгу, которую хотите скачать ниже.",
+                      "📥 Хотите скачать какую-нибудь методичку? Выберите номер, которую хотите скачать.",
                 parseMode: ParseMode.Markdown,
                 replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
