@@ -220,25 +220,34 @@ namespace ConflictResolutionBot
 
         private static async Task SendConceptInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData("1", "callback8"),
+                    InlineKeyboardButton.WithCallbackData("2", "callback9"),
+                    InlineKeyboardButton.WithCallbackData("3", "callback10")
+                }
+            });
+            string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников*\n\n";
+            text += "1. Гришина Н.В.\n" +
+                    "   Психология конфликта.\nСПб, 2008.\n" +
+                    "   Обобщает теоретические и практические аспекты конфликтов, включая их проявления в школьной среде.\n\n";
+
+            text += "2. Анцупов А. Я., Баклановский С. В.\n" +
+                    "   Конфликтология в схемах и комментариях.\nСПб 2009.\n" +
+                    "   Учебное пособие, в котором отражены результаты применения системного подхода к исследованию конфликтов.\n\n";
+
+            text += "3. Хван А.А., Зайцев Ю.А., Кузнецова  Ю.А.\n" +
+                    "   Стандартизированный опросник измерения агрессивных и враждебных реакций А.Басса и А.Дарки.\nМ., 2005.\n" +
+                    "   Пособие содержит данные по стандартизации широко известной методики исследования агрессивных и враждебных реакций Басса-Дарки.\n\n";
+            text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
+
             await botClient.SendMessage(
                 chatId: chatId,
-                text: "🧠 *Психология подростка и конфликтологическая компетентность*\n\n" +
-                      "*Что такое конфликтологическая компетентность?*\n" +
-                      "Конфликтологическая компетентность — это способность человека эффективно взаимодействовать в конфликтных ситуациях, предупреждать, управлять и конструктивно разрешать конфликты.\n\n" +
-                      "*Компоненты конфликтологической компетентности:*\n" +
-                      "• Когнитивный (знания о природе конфликта)\n" +
-                      "• Эмоциональный (управление эмоциями)\n" +
-                      "• Поведенческий (владение стратегиями поведения)\n" +
-                      "• Мотивационный (готовность к разрешению конфликта)\n" +
-                      "• Ценностный (ориентация на сотрудничество)\n\n" +
-                      "*Особенности подросткового возраста:*\n" +
-                      "• Стремление к самостоятельности\n" +
-                      "• Обостренное чувство справедливости\n" +
-                      "• Эмоциональная нестабильность\n" +
-                      "• Формирование идентичности\n" +
-                      "• Значимость мнения сверстников\n\n" +
-                      "Хотите узнать больше о методах диагностики конфликтности? Используйте команду /methods",
+                text: text,
                 parseMode: ParseMode.Markdown,
+                replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
         }
 
@@ -302,6 +311,18 @@ namespace ConflictResolutionBot
                     case "callback7":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
                         filePath = "/root/mediator/Literature/Тропинка к своему Я.pdf";
+                        break;
+                    case "callback8":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Психология конфликта.pdf";
+                        break;
+                    case "callback9":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Конфликтология в схемах и комментариях.pdf";
+                        break;
+                    case "callback10":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Стандартизированный опросник.pdf";
                         break;
                     default:
                         Console.WriteLine($"Unknown callback data: {e.Data}");
