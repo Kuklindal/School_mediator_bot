@@ -265,52 +265,49 @@ namespace ConflictResolutionBot
                 replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
         }
-        private static async Task HandleCallbackQueryAsync(object sender, CallbackQuery e)
+        private static async Task HandleCallbackQueryAsync(ITelegramBotClient botClient, CallbackQuery e)
         {
             string filePath = "";
-            switch (e.Data)
+            try
             {
-                case "callback1":
-                    await botClient.AnswerCallbackQuery(
-                            e.Id,
-                            showAlert: false);
+                switch (e.Data)
+                {
+                    case "callback1":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Пробуждение.pdf";
+                        break;
+                    case "callback2":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Методика управления конфликтами.pdf";
+                        break;
+                    case "callback3":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Формирование конфликтологической компетентности.pdf";
+                        break;
+                    default:
+                        Console.WriteLine($"Unknown callback data: {e.Data}");
+                        return; // Неправильное значение
+                }
 
-                    // 2. Отправляем файл с сервера
-                    filePath = "/root/mediator/Literature/Пробуждение.pdf";
-                    await using (var stream = System.IO.File.OpenRead(filePath))
-                    {
-                        await botClient.SendDocument(
-                            chatId: e.Message.Chat.Id,
-                            document: new InputFileStream(stream, "Пробуждение.pdf"));
-                    }
-                    break;
-                case "callback2":
-                    await botClient.AnswerCallbackQuery(
-                            e.Id,
-                            showAlert: false);
+                // Проверяем существует ли файл
+                if (!System.IO.File.Exists(filePath))
+                {
+                    await botClient.SendMessage(e.Message.Chat.Id, "Файл не найден.");
+                    return;
+                }
 
-                    // 2. Отправляем файл с сервера
-                    filePath = "/root/mediator/Literature/Методика управления конфликтами.pdf";
-                    await using (var stream = System.IO.File.OpenRead(filePath))
-                    {
-                        await botClient.SendDocument(
-                            chatId: e.Message.Chat.Id,
-                            document: new InputFileStream(stream, "Методика управления конфликтами.pdf"));
-                    }
-                    break;
-                case "callback3":
-                    await botClient.AnswerCallbackQuery(
-                            e.Id,
-                            showAlert: false);
-                    // 2. Отправляем файл с сервера
-                    filePath = "/root/mediator/Literature/Формирование конфликтологической компетентности.pdf";
-                    await using (var stream = System.IO.File.OpenRead(filePath))
-                    {
-                        await botClient.SendDocument(
-                            chatId: e.Message.Chat.Id,
-                            document: new InputFileStream(stream, "Формирование конфликтологической компетентности.pdf"));
-                    }
-                    break;
+                // Отправляем файл
+                await using (var stream = System.IO.File.OpenRead(filePath))
+                {
+                    await botClient.SendDocument(
+                        chatId: e.Message.Chat.Id,
+                        document: new InputFileStream(stream, Path.GetFileName(filePath)));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error handling callback query: {ex.Message}");
+                await botClient.SendMessage(e.Message.Chat.Id, "Произошла ошибка при отправке файла.");
             }
         }
         private static async Task SendAskQuestionAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
