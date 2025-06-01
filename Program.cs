@@ -263,7 +263,7 @@ namespace ConflictResolutionBot
                       "Цель: научить слушателей анализировать конфликт, понимать его и уметь управлять им, применяя эффективные поведенческие стратегии в профилактике и разрешении конфликтных ситуаций.\n\n" +
                       "3. 🔸 *«Формирование конфликтологической компетентности»*\n" +
                       "Цель: предоставление возможности участникам тренинга получить опыт конструктивного решения конфликтных ситуаций.\n\n" +
-                      "📥 Хотите скачать какую-нибудь методичку? Выберите номер, которую хотите скачать.",
+                      "📥 Хотите скачать какую-нибудь методичку? Выберите её номер ниже.",
                 parseMode: ParseMode.Markdown,
                 replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
@@ -286,6 +286,22 @@ namespace ConflictResolutionBot
                     case "callback3":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
                         filePath = "/root/mediator/Literature/Формирование конфликтологической компетентности.pdf";
+                        break;
+                    case "callback4":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Формирование личности ребенка в общении.pdf";
+                        break;
+                    case "callback5":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Приглашение в мир общения.pdf";
+                        break;
+                    case "callback6":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Межличностные отношения дошкольников.pdf";
+                        break;
+                    case "callback7":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Тропинка к своему Я.pdf";
                         break;
                     default:
                         Console.WriteLine($"Unknown callback data: {e.Data}");
@@ -504,15 +520,40 @@ namespace ConflictResolutionBot
 
         private static async Task SendYoungerStudentsInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData("1", "callback4"),
+                    InlineKeyboardButton.WithCallbackData("2", "callback5"),
+                    InlineKeyboardButton.WithCallbackData("3", "callback6"),
+                    InlineKeyboardButton.WithCallbackData("4", "callback7")
+                }
+            });
+            string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников*\n\n";
+            text += "1. Лисина М.М.\n" +
+                    "   Формирование личности ребенка в общении.\nСПб, 2009.\n" +
+                    "   Рассматривает роль общения в развитии личности и навыков разрешения конфликтов у детей.\n\n";
+
+            text += "2. Пилипко Н.В.\n" +
+                    "   Приглашение в мир общения. Ч. 1, 2.\nМ., 1999, 2001.\n" +
+                    "   Пособие по развитию коммуникативной компетентности у детей.\n\n";
+
+            text += "3. Смирнова Е.О.\n" +
+                    "   Межличностные отношения дошкольников: диагностика, проблемы, коррекция.\nМ., 2005.\n" +
+                    "   Исследует особенности межличностных отношений и конфликтов у дошкольников.\n\n";
+
+            text += "4. Хухлаева О.В.\n" +
+                    "   Тропинка к своему Я: уроки психологии в начальной школе(1–4).\nМ., 2009.\n" +
+                    "   Пособие по развитию самопознания и эмоционального интеллекта у младших школьников.\n\n";
+
+            text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
+
             await botClient.SendMessage(
                 chatId: chatId,
-                text: "Котова С.А., Костикова В.И.\r\nКонфликтная компетентность младших школьников // Герценовские чтения. Начальное образование. СПб, 2011.\r\nИсследуют особенности формирования конфликтной компетентности у младших школьников." +
-                      "Лисина М.М.\r\nФормирование личности ребенка в общении. СПб, 2009.\r\nРассматривает роль общения в развитии личности и навыков разрешения конфликтов у детей." +
-                      "Агафонова И.Н.\r\nУроки общения для детей 6–10 лет. Программа «Я и Мы». СПб, 2003.\r\nРазрабатывает программу обучения детей навыкам общения и разрешения конфликтов." +
-                      "Пилипко Н.В.\r\nПриглашение в мир общения. Ч. 1, 2. М., 1999, 2001.\r\nПособие по развитию коммуникативной компетентности у детей." +
-                      "Смирнова Е.О.\r\nМежличностные отношения дошкольников: диагностика, проблемы, коррекция. М., 2005.\r\nИсследует особенности межличностных отношений и конфликтов у дошкольников."+
-                      "Хухлаева О.В.\r\nТропинка к своему Я: уроки психологии в начальной школе (1–4). М., 2009.\r\nПособие по развитию самопознания и эмоционального интеллекта у младших школьников.",
+                text: text,
                 parseMode: ParseMode.Markdown,
+                replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
         }
 
