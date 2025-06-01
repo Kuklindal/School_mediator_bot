@@ -30,7 +30,7 @@ namespace ConflictResolutionBot
                     return;
                 }
 
-                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "YOUR_TOKEN";
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "";
                 botClient = new TelegramBotClient(botToken);
 
                 var receiverOptions = new ReceiverOptions
@@ -80,7 +80,11 @@ namespace ConflictResolutionBot
             // Only process text messages
             if (message.Text is not { } messageText)
                 return;
-
+            if (update.CallbackQuery is { } callbackQuery)
+            {
+                await HandleCallbackQueryAsync(botClient, callbackQuery);
+                return;
+            }
             var chatId = message.Chat.Id;
             if (_awaitingQuery.TryGetValue(chatId, out bool isWaiting) && isWaiting)
             {
@@ -176,7 +180,7 @@ namespace ConflictResolutionBot
         {
             await botClient.SendMessage(
                 chatId: chatId,
-                text: "Составителем данного бота является студентка РГПУ им. А.И. Герцена института психологии направления: «Развитие личностного потенциала» - Хромова Анастасия Германовна.\n_________________________________________________________\n\n" +
+                text:
                       "Здравствуйте! 👋\n" +
                       "Я — ваш помощник по вопросам конфликтологической компетентности современных школьников.\n" +
                       "Чем могу помочь?\n\n" +
@@ -184,7 +188,9 @@ namespace ConflictResolutionBot
                       "🧠 /concept – Психология подростка\n" +
                       "🛠 /methods – практические приёмы и упражнения\n" +
                       "❓ /question – задать свой вопрос\n" +
-                      "🔎 /find – найти информацию по теме\n",
+                      "🔎 /find – найти информацию по теме\n" +
+                      "🎓 /young_students -  младшие школьники\n" +
+                      "📝 /psychological_games - психологический игры\n",
                 cancellationToken: cancellationToken);
         }
 
@@ -239,28 +245,74 @@ namespace ConflictResolutionBot
             {
                 new []
                 {
-                    InlineKeyboardButton.WithUrl("Скачать методичку", "https://example.com/conflict_methods.pdf")
+                    InlineKeyboardButton.WithCallbackData("Психологический тренинг - «Пробуждение»", "callback1"),
+                    InlineKeyboardButton.WithCallbackData("Методика управления конфликтами", "callback2"),
+                    InlineKeyboardButton.WithCallbackData("Формирование конфликтологической компетентности", "callback3")
                 }
             });
 
             await botClient.SendMessage(
                 chatId: chatId,
-                text: "🛠 *Методики и упражнения для развития конфликтологической компетентности*\n\n" +
-                      "*Эффективные методики:*\n\n" +
-                      "🔸 *«Конфликт — это точка зрения»*\n" +
-                      "Упражнение на рассмотрение конфликтной ситуации с разных позиций. Участники анализируют ситуацию с точки зрения всех вовлеченных сторон.\n\n" +
-                      "🔸 *«Мост вместо стены»*\n" +
-                      "Упражнение на развитие эмпатии и понимания чувств других людей. Участники учатся строить \"мосты\" понимания вместо \"стен\" отчуждения.\n\n" +
-                      "🔸 *Ролевая игра «Медиация»*\n" +
-                      "Моделирование процесса медиации, где участники по очереди выступают в роли конфликтующих сторон и медиатора.\n\n" +
-                      "🔸 *Тренинг «Я-высказывания»*\n" +
-                      "Обучение конструктивным способам выражения претензий и недовольства через формулу \"Я-высказывания\".\n\n" +
-                      "📥 Хотите получить полную методичку с упражнениями? Нажмите на кнопку \"Скачать методичку\" ниже.",
+                text: "🛠 *Упражнения и тренинги для развития конфликтологической компетентности*\n\n" +
+                      "🔸 *Психологический тренинг - «Пробуждение»*\n" +
+                      "Цель: повышение психологической компетентности педагогов в вопросах воспитания и развитие эффективных навыков коммуникации с коллегами и  родителями.\n\n" +
+                      "🔸 *«Методика управления конфликтами»*\n" +
+                      "Цель: научить слушателей анализировать конфликт, понимать его и уметь управлять им, применяя эффективные поведенческие стратегии в профилактике и разрешении конфликтных ситуаций." +
+                      "🔸 *«Формирование конфликтологической компетентности»*\n" +
+                      "Цель: предоставление возможности участникам тренинга получить опыт конструктивного решения конфликтных ситуаций.\n\n" +
+                      "📥 Хотите скачать какую-нибудь методичку? Выберите книгу, которую хотите скачать ниже.",
                 parseMode: ParseMode.Markdown,
                 replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
         }
+        private static async Task HandleCallbackQueryAsync(object sender, CallbackQuery e)
+        {
+            string filePath = "";
+            switch (e.Data)
+            {
+                case "callback1":
+                    await botClient.AnswerCallbackQuery(
+                            e.Id,
+                            showAlert: false);
 
+                    // 2. Отправляем файл с сервера
+                    filePath = "/root/mediator/Literature/Пробуждение.pdf";
+                    await using (var stream = System.IO.File.OpenRead(filePath))
+                    {
+                        await botClient.SendDocument(
+                            chatId: e.Message.Chat.Id,
+                            document: new InputFileStream(stream, "Пробуждение.pdf"));
+                    }
+                    break;
+                case "callback2":
+                    await botClient.AnswerCallbackQuery(
+                            e.Id,
+                            showAlert: false);
+
+                    // 2. Отправляем файл с сервера
+                    filePath = "/root/mediator/Literature/Методика управления конфликтами.pdf";
+                    await using (var stream = System.IO.File.OpenRead(filePath))
+                    {
+                        await botClient.SendDocument(
+                            chatId: e.Message.Chat.Id,
+                            document: new InputFileStream(stream, "Методика управления конфликтами.pdf"));
+                    }
+                    break;
+                case "callback3":
+                    await botClient.AnswerCallbackQuery(
+                            e.Id,
+                            showAlert: false);
+                    // 2. Отправляем файл с сервера
+                    filePath = "/root/mediator/Literature/Формирование конфликтологической компетентности.pdf";
+                    await using (var stream = System.IO.File.OpenRead(filePath))
+                    {
+                        await botClient.SendDocument(
+                            chatId: e.Message.Chat.Id,
+                            document: new InputFileStream(stream, "Формирование конфликтологической компетентности.pdf"));
+                    }
+                    break;
+            }
+        }
         private static async Task SendAskQuestionAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
             await botClient.SendMessage(
@@ -454,23 +506,12 @@ namespace ConflictResolutionBot
         {
             await botClient.SendMessage(
                 chatId: chatId,
-                text: "🎓 *Особенности работы с младшими школьниками*\n\n" +
-                      "*Психологические особенности младших школьников:*\n" +
-                      "• Высокая эмоциональность и импульсивность\n" +
-                      "• Недостаточно развитая саморегуляция\n" +
-                      "• Конкретное мышление\n" +
-                      "• Авторитет взрослого (особенно учителя)\n" +
-                      "• Потребность в одобрении\n\n" +
-                      "*Рекомендуемые методики:*\n" +
-                      "1. *Сказкотерапия* - использование сказочных сюжетов для обсуждения конфликтных ситуаций\n" +
-                      "2. *Игры-драматизации* - проигрывание конфликтных ситуаций с последующим обсуждением\n" +
-                      "3. *«Волшебные очки»* - упражнение на развитие эмпатии и умения видеть хорошее в других\n" +
-                      "4. *«Мирилки»* - разучивание стихотворных формул примирения\n\n" +
-                      "*Литература:*\n" +
-                      "• Фопель К. \"Как научить детей сотрудничать\"\n" +
-                      "• Кривцова С.В. \"Жизненные навыки. Уроки психологии в начальной школе\"\n" +
-                      "• Хухлаева О.В. \"Тропинка к своему Я: уроки психологии в начальной школе\"\n\n" +
-                      "Для получения конкретных упражнений используйте команду /methods",
+                text: "Котова С.А., Костикова В.И.\r\nКонфликтная компетентность младших школьников // Герценовские чтения. Начальное образование. СПб, 2011.\r\nИсследуют особенности формирования конфликтной компетентности у младших школьников." +
+                      "Лисина М.М.\r\nФормирование личности ребенка в общении. СПб, 2009.\r\nРассматривает роль общения в развитии личности и навыков разрешения конфликтов у детей." +
+                      "Агафонова И.Н.\r\nУроки общения для детей 6–10 лет. Программа «Я и Мы». СПб, 2003.\r\nРазрабатывает программу обучения детей навыкам общения и разрешения конфликтов." +
+                      "Пилипко Н.В.\r\nПриглашение в мир общения. Ч. 1, 2. М., 1999, 2001.\r\nПособие по развитию коммуникативной компетентности у детей." +
+                      "Смирнова Е.О.\r\nМежличностные отношения дошкольников: диагностика, проблемы, коррекция. М., 2005.\r\nИсследует особенности межличностных отношений и конфликтов у дошкольников."+
+                      "Хухлаева О.В.\r\nТропинка к своему Я: уроки психологии в начальной школе (1–4). М., 2009.\r\nПособие по развитию самопознания и эмоционального интеллекта у младших школьников.",
                 parseMode: ParseMode.Markdown,
                 cancellationToken: cancellationToken);
         }
