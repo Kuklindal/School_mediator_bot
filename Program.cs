@@ -82,6 +82,7 @@ namespace ConflictResolutionBot
                 return;
             if (update.CallbackQuery is { } callbackQuery)
             {
+                Console.WriteLine(callbackQuery.Data.ToString() + "111");
                 await HandleCallbackQueryAsync(botClient, callbackQuery);
                 return;
             }
