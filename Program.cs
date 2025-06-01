@@ -199,22 +199,36 @@ namespace ConflictResolutionBot
 
         private static async Task SendLiteratureAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
-            string text = "📚 *Рекомендуемая литература по конфликтологии*\n\n";
-            int count = 1;
-            foreach (LiteratureItem item in DataService.Literature)
-            {
-                if (count > 5)
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+                new []
                 {
-                    break;
+                    InlineKeyboardButton.WithCallbackData("1", "callback11"),
+                    InlineKeyboardButton.WithCallbackData("2", "callback12"),
+                    InlineKeyboardButton.WithCallbackData("3", "callback13"),
+                    InlineKeyboardButton.WithCallbackData("4", "callback14")
                 }
-                text += $"{count}. {item.Authors}\n \"{item.Title}\" - {item.Description}, {item.Year}\n";
-                count++;
-            }
-            text += "\n💡 Вы можете ввести /find [фамилия автора или тема] для быстрого поиска.";
+            });
+            string text = "📚 *Рекомендуемая литература по конфликтологии*\n\n";
+            text += "1. Абраменкова В.В.\n" +
+                    "   Социальная психология детства. М., 2008.\n" +
+                    "   Рассматривает особенности социального развития детей, включая формирование навыков взаимодействия и разрешения конфликтов.\n\n";
+            text += "2. Немов Р.С.\n" +
+                    "   Психология: Учебник для студентов высших педагогических заведений. Т. 2. М., 2007.\n" +
+                    "   Содержит разделы, посвящённые межличностным отношениям и конфликтам в образовательной среде.\n\n";
+            text += "3. Хасан Б.И.\n" +
+                    "   Психотехника конфликта и конфликтная компетентность. Красноярск, 1996.\n" +
+                    "   Предлагает психотехнические подходы к развитию конфликтной компетентности.\n\n";
+            text += "4. Соколов С. В.\n" +
+                    "   Социальная конфликтология. Москва, 2001.\n" +
+                    "   Рассматриваются природа и классификация социальных конфликтов.\n\n";
+            text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
+
             await botClient.SendMessage(
                 chatId: chatId,
                 text: text,
                 parseMode: ParseMode.Markdown,
+                replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
         }
 
@@ -231,15 +245,15 @@ namespace ConflictResolutionBot
             });
             string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников*\n\n";
             text += "1. Гришина Н.В.\n" +
-                    "   Психология конфликта.\nСПб, 2008.\n" +
+                    "   Психология конфликта. СПб, 2008.\n" +
                     "   Обобщает теоретические и практические аспекты конфликтов, включая их проявления в школьной среде.\n\n";
 
             text += "2. Анцупов А. Я., Баклановский С. В.\n" +
-                    "   Конфликтология в схемах и комментариях.\nСПб 2009.\n" +
+                    "   Конфликтология в схемах и комментариях. СПб, 2009.\n" +
                     "   Учебное пособие, в котором отражены результаты применения системного подхода к исследованию конфликтов.\n\n";
 
             text += "3. Хван А.А., Зайцев Ю.А., Кузнецова  Ю.А.\n" +
-                    "   Стандартизированный опросник измерения агрессивных и враждебных реакций А.Басса и А.Дарки.\nМ., 2005.\n" +
+                    "   Стандартизированный опросник измерения агрессивных и враждебных реакций А.Басса и А.Дарки. М., 2005.\n" +
                     "   Пособие содержит данные по стандартизации широко известной методики исследования агрессивных и враждебных реакций Басса-Дарки.\n\n";
             text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
 
@@ -323,6 +337,22 @@ namespace ConflictResolutionBot
                     case "callback10":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
                         filePath = "/root/mediator/Literature/Стандартизированный опросник.pdf";
+                        break;
+                    case "callback11":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Социальная психология детства.pdf";
+                        break;
+                    case "callback12":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Психология: Учебник для студентов высших педагогических заведений.pdf";
+                        break;
+                    case "callback13":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Психотехника конфликта и конфликтная компетентность.pdf";
+                        break;
+                    case "callback14":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Социальная конфликтология.pdf";
                         break;
                     default:
                         Console.WriteLine($"Unknown callback data: {e.Data}");
@@ -452,8 +482,6 @@ namespace ConflictResolutionBot
                 }
                 count++;
                 response.AppendLine($"{result.FileName}");
-                //if (result.PageNumber > 0) response.AppendLine($"📖 Страница: {result.PageNumber}");
-                //response.AppendLine($"💬 Найдено: {result.Excerpt}");
                 response.AppendLine("------------------------");
             }
             await botClient.SendMessage(
@@ -553,19 +581,19 @@ namespace ConflictResolutionBot
             });
             string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников*\n\n";
             text += "1. Лисина М.М.\n" +
-                    "   Формирование личности ребенка в общении.\nСПб, 2009.\n" +
+                    "   Формирование личности ребенка в общении. СПб, 2009.\n" +
                     "   Рассматривает роль общения в развитии личности и навыков разрешения конфликтов у детей.\n\n";
 
             text += "2. Пилипко Н.В.\n" +
-                    "   Приглашение в мир общения. Ч. 1, 2.\nМ., 1999, 2001.\n" +
+                    "   Приглашение в мир общения. Ч. 1, 2. М., 1999, 2001.\n" +
                     "   Пособие по развитию коммуникативной компетентности у детей.\n\n";
 
             text += "3. Смирнова Е.О.\n" +
-                    "   Межличностные отношения дошкольников: диагностика, проблемы, коррекция.\nМ., 2005.\n" +
+                    "   Межличностные отношения дошкольников: диагностика, проблемы, коррекция. М., 2005.\n" +
                     "   Исследует особенности межличностных отношений и конфликтов у дошкольников.\n\n";
 
             text += "4. Хухлаева О.В.\n" +
-                    "   Тропинка к своему Я: уроки психологии в начальной школе(1–4).\nМ., 2009.\n" +
+                    "   Тропинка к своему Я: уроки психологии в начальной школе\n(1–4). М., 2009.\n" +
                     "   Пособие по развитию самопознания и эмоционального интеллекта у младших школьников.\n\n";
 
             text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
