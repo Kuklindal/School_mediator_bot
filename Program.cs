@@ -18,6 +18,7 @@ namespace ConflictResolutionBot
         private static TelegramBotClient? botClient;
         private static CancellationTokenSource cts = new CancellationTokenSource();
         private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
+        private static readonly long AdminChatId = long.Parse(Environment.GetEnvironmentVariable("ADMIN_CHAT_ID") ?? "796409454");
         static async Task Main(string[] args)
         {
             try
@@ -73,7 +74,6 @@ namespace ConflictResolutionBot
 
         private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            Console.WriteLine($"Update type: {update.Type}");
             // Only process Message updates
             if (update.CallbackQuery is CallbackQuery)
             {
@@ -95,17 +95,17 @@ namespace ConflictResolutionBot
                 await ProcessSearchQuery(botClient, chatId, messageText, cancellationToken);
                 return;
             }
-            Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
-            if (message.ReplyToMessage?.Text?.Contains("Введите поисковый запрос") == true)
+            if (_awaitingQuestion.TryGetValue(chatId, out bool isWaitingForQuestion) && isWaitingForQuestion)
             {
-                string searchQuery = message.Text.StartsWith("/find ")
-                    ? message.Text.Substring(6)
-                    : message.Text;
-
-                await SearchInfoAsync(botClient, chatId, searchQuery, cancellationToken);
+                _awaitingQuestion.TryRemove(chatId, out _);
+                await ForwardQuestionToAdmin(botClient, message);
+                await botClient.SendMessage(
+                    chatId: chatId,
+                    text: "✅ Ваш вопрос принят! Спасибо, мы ответим в ближайшее время.",
+                    cancellationToken: cancellationToken);
                 return;
             }
-            // Handle commands
+            Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
             if (messageText.StartsWith("/"))
             {
                 await HandleCommandAsync(botClient, message, cancellationToken);
@@ -128,7 +128,42 @@ namespace ConflictResolutionBot
                 text: "Не совсем понимаю ваш запрос. Пожалуйста, воспользуйтесь командами из меню или напишите /start для получения списка доступных команд.",
                 cancellationToken: cancellationToken);
         }
+        private static async Task ForwardQuestionToAdmin(ITelegramBotClient botClient, Message message)
+        {
+            if (AdminChatId == 0)
+            {
+                Console.WriteLine("Admin chat ID is not set!");
+                return;
+            }
 
+            try
+            {
+                // Формируем информацию о пользователе
+                var userInfo = $"Новый вопрос от пользователя:\n" +
+                               $"👤 {message.Chat.FirstName} {message.Chat.LastName} (@{message.Chat.Username})\n" +
+                               $"🆔 ID: {message.Chat.Id}\n\n" +
+                               $"✉️ Вопрос:";
+
+                // Отправляем информацию о пользователе
+                await botClient.SendMessage(
+                    chatId: AdminChatId,
+                    text: userInfo,
+                    cancellationToken: default);
+
+                // Пересылаем оригинальное сообщение
+                await botClient.ForwardMessage(
+                    chatId: AdminChatId,
+                    fromChatId: message.Chat.Id,
+                    messageId: message.MessageId,
+                    cancellationToken: default);
+
+                Console.WriteLine($"Question forwarded from {message.Chat.Id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error forwarding question: {ex}");
+            }
+        }
         private static async Task HandleCommandAsync(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
             var chatId = message.Chat.Id;
@@ -161,10 +196,6 @@ namespace ConflictResolutionBot
                     await HandleSearchCommand(botClient, chatId, searchQuery, cancellationToken, message);
                     break;
 
-                case "/psychological_games":
-                    await SendPsychologicalGamesAsync(botClient, chatId, cancellationToken);
-                    break;
-
                 case "/young_students":
                     await SendYoungerStudentsInfoAsync(botClient, chatId, cancellationToken);
                     break;
@@ -192,8 +223,7 @@ namespace ConflictResolutionBot
                       "🛠 /methods – практические приёмы и упражнения\n" +
                       "❓ /question – задать свой вопрос\n" +
                       "🔎 /find – найти информацию по теме\n" +
-                      "🎓 /young_students -  младшие школьники\n" +
-                      "📝 /psychological_games - психологический игры\n",
+                      "🎓 /young_students -  младшие школьники\n",
                 cancellationToken: cancellationToken);
         }
 
@@ -206,7 +236,9 @@ namespace ConflictResolutionBot
                     InlineKeyboardButton.WithCallbackData("1", "callback11"),
                     InlineKeyboardButton.WithCallbackData("2", "callback12"),
                     InlineKeyboardButton.WithCallbackData("3", "callback13"),
-                    InlineKeyboardButton.WithCallbackData("4", "callback14")
+                    InlineKeyboardButton.WithCallbackData("4", "callback14"),
+                    InlineKeyboardButton.WithCallbackData("5", "callback18"),
+                    InlineKeyboardButton.WithCallbackData("6", "callback19")
                 }
             });
             string text = "📚 *Рекомендуемая литература по конфликтологии*\n\n";
@@ -222,8 +254,13 @@ namespace ConflictResolutionBot
             text += "4. Соколов С. В.\n" +
                     "   Социальная конфликтология. Москва, 2001.\n" +
                     "   Рассматриваются природа и классификация социальных конфликтов.\n\n";
+            text += "5. Реан А. А.\n" +
+                    "   ПСИХОЛОГИЯ ДЕВИАНТНОСТИ. Дети, Общество, Закон. Москва, 2022.\n" +
+                    "   Книга дает развернутую психологическую характеристику отклоняющегося поведения, обращается к различным формам его проявления.\n\n";
+            text += "6. Деркач А. А.\n" +
+                    "   Акмеология. Москва, 2004.\n" +
+                    "   В книге рассмотрены основные акмеологические понятия, методологические подходы и принципы акмеологии, методы акмеологического исследования и практики, акмеологические стратегии оптимизации развития личности и социума и др.\n\n";
             text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
-
             await botClient.SendMessage(
                 chatId: chatId,
                 text: text,
@@ -273,7 +310,10 @@ namespace ConflictResolutionBot
                 {
                     InlineKeyboardButton.WithCallbackData("1", "callback1"),
                     InlineKeyboardButton.WithCallbackData("2", "callback2"),
-                    InlineKeyboardButton.WithCallbackData("3", "callback3")
+                    InlineKeyboardButton.WithCallbackData("3", "callback3"),
+                    InlineKeyboardButton.WithCallbackData("4", "callback15"),
+                    InlineKeyboardButton.WithCallbackData("5", "callback16"),
+                    InlineKeyboardButton.WithCallbackData("6", "callback17")
                 }
             });
 
@@ -285,6 +325,12 @@ namespace ConflictResolutionBot
                       "2. 🔸 *«Методика управления конфликтами»*\n" +
                       "Цель: научить слушателей анализировать конфликт, понимать его и уметь управлять им, применяя эффективные поведенческие стратегии в профилактике и разрешении конфликтных ситуаций.\n\n" +
                       "3. 🔸 *«Формирование конфликтологической компетентности»*\n" +
+                      "Цель: предоставление возможности участникам тренинга получить опыт конструктивного решения конфликтных ситуаций.\n\n" +
+                      "4. 🔸 *«Как научить детей сотрудничать? Психологические игры и упражнения»*\n" +
+                      "Цель: показать упражнения для развития навыков сотрудничества и разрешения конфликтов.\n\n" +
+                      "5. 🔸 *«Детская психология»*\n" +
+                      "Цель: описать этапы психологического развития детей, включая аспекты, связанные с конфликтами.\n\n" +
+                      "6. 🔸 *«Формирование конфликтологической компетентности»*\n" +
                       "Цель: предоставление возможности участникам тренинга получить опыт конструктивного решения конфликтных ситуаций.\n\n" +
                       "📥 Хотите скачать какую-нибудь методичку? Выберите её номер ниже.",
                 parseMode: ParseMode.Markdown,
@@ -344,7 +390,7 @@ namespace ConflictResolutionBot
                         break;
                     case "callback12":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
-                        filePath = "/root/mediator/Literature/Психология: Учебник для студентов высших педагогических заведений.pdf";
+                        filePath = "/root/mediator/Literature/Психология - yчебник для студентов высших педагогических заведений.pdf";
                         break;
                     case "callback13":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
@@ -353,6 +399,26 @@ namespace ConflictResolutionBot
                     case "callback14":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
                         filePath = "/root/mediator/Literature/Социальная конфликтология.pdf";
+                        break;
+                    case "callback15":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Как научить детей сотрудничать.pdf";
+                        break;
+                    case "callback16":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Детская психология.pdf";
+                        break;
+                    case "callback17":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Психологические игры для детей.pdf";
+                        break;
+                    case "callback18":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/ПСИХОЛОГИЯ ДЕВИАНТНОСТИ.pdf";
+                        break;
+                    case "callback19":
+                        await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
+                        filePath = "/root/mediator/Literature/Акмеология.pdf";
                         break;
                     default:
                         Console.WriteLine($"Unknown callback data: {e.Data}");
@@ -380,8 +446,10 @@ namespace ConflictResolutionBot
                 await botClient.SendMessage(e.Message.Chat.Id, "Произошла ошибка при отправке файла.");
             }
         }
+        private static readonly ConcurrentDictionary<long, bool> _awaitingQuestion = new();
         private static async Task SendAskQuestionAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
+            _awaitingQuestion[chatId] = true;
             await botClient.SendMessage(
                 chatId: chatId,
                 text: "✍️ Пожалуйста, напишите свой вопрос в свободной форме.\n" +
@@ -488,82 +556,6 @@ namespace ConflictResolutionBot
                 chatId: chatId,
                 text: response.ToString(),
                 parseMode: ParseMode.Markdown,
-                cancellationToken: cancellationToken);
-        }
-        private static async Task SearchInfoAsync(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                // Отправляем сообщение с ForceReply и примером
-                await botClient.SendMessage(
-                    chatId: chatId,
-                    text: "🔍 *Введите ваш поисковый запрос:*\nПример: `/find эмпатия`",
-                    parseMode: ParseMode.Markdown,
-                    replyMarkup: new ForceReplyMarkup { InputFieldPlaceholder = "/find [ваш запрос]" },
-                    cancellationToken: cancellationToken);
-                return;
-            }
-            // Simple search implementation - in a real app, this would query a database
-            string response;
-
-            if (query.Contains("эмпат", StringComparison.OrdinalIgnoreCase))
-            {
-                response = "*Результаты поиска по запросу \"эмпатия\":*\n\n" +
-                           "📚 *Литература:*\n" +
-                           "1. Гиппенрейтер Ю.Б. \"Общаться с ребенком. Как?\" - глава об эмпатическом слушании\n" +
-                           "2. Роджерс К. \"Эмпатия\" - классическая работа о природе эмпатии\n\n" +
-                           "🛠 *Методики:*\n" +
-                           "1. Упражнение \"Зеркало чувств\" - тренировка распознавания эмоций\n" +
-                           "2. Тренинг \"В чужих ботинках\" - развитие способности видеть ситуацию глазами другого\n\n" +
-                           "Хотите получить полную информацию о методиках развития эмпатии? Используйте команду /methods";
-            }
-            else if (query.Contains("подрост", StringComparison.OrdinalIgnoreCase))
-            {
-                response = "*Результаты поиска по запросу \"подросток\":*\n\n" +
-                           "📚 *Литература:*\n" +
-                           "1. Райс Ф. \"Психология подросткового возраста\"\n" +
-                           "2. Реан А.А. \"Психология подростка\"\n" +
-                           "3. Фельдштейн Д.И. \"Психология взросления\"\n\n" +
-                           "🧠 *Особенности подросткового возраста:*\n" +
-                           "• Стремление к самостоятельности\n" +
-                           "• Обостренное чувство справедливости\n" +
-                           "• Эмоциональная нестабильность\n" +
-                           "• Формирование идентичности\n" +
-                           "• Значимость мнения сверстников\n\n" +
-                           "Для получения полной информации о психологии подростка используйте команду /понятие";
-            }
-            else
-            {
-                response = $"По запросу \"{query}\" найдено недостаточно информации. Попробуйте использовать другие ключевые слова или обратитесь к основным разделам:\n\n" +
-                           "📚 /литература – список рекомендуемой литературы\n" +
-                           "🧠 /понятие – Психология подростка\n" +
-                           "🛠 /методики – практические приёмы и упражнения";
-            }
-
-            await botClient.SendMessage(
-                chatId: chatId,
-                text: response,
-                parseMode: ParseMode.Markdown,
-                cancellationToken: cancellationToken);
-        }
-
-        private static async Task SendPsychologicalGamesAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
-        {
-            await botClient.SendMessage(
-                chatId: chatId,
-                text: "📝 *Психологические игры для развития конфликтологической компетентности*\n\n" +
-                      "1. «Острова»*\n" +
-                      "Цель: развитие навыков сотрудничества и поиска компромисса.\n" +
-                      "Описание: Участники делятся на группы, каждая из которых получает \"остров\" (лист бумаги). По мере игры \"острова\" уменьшаются, и группам необходимо размещаться на всё меньшей территории, не выталкивая друг друга.\n\n" +
-                      "2. «Конфликтные ситуации»*\n" +
-                      "Цель: анализ типичных конфликтных ситуаций и поиск конструктивных решений.\n" +
-                      "Описание: Участники получают карточки с описанием конфликтных ситуаций и должны предложить несколько вариантов их разрешения.\n\n" +
-                      "3. «Поводырь и слепой»*\n" +
-                      "Цель: развитие доверия и ответственности.\n" +
-                      "Описание: Участники работают в парах, один с закрытыми глазами, другой выступает в роли поводыря. Затем участники меняются ролями и обсуждают свои ощущения.\n\n" +
-                      "4. «Четыре угла»*\n" +
-                      "Цель: осознание различных стратегий поведения в конфликте.\n" +
-                      "Описание: Каждый угол комнаты обозначает определенную стратегию (соперничество, сотрудничество, компромисс, избегание). Участники выбирают угол в зависимости от своего обычного поведения в конфликте и обсуждают свой выбор.\n\n",
                 cancellationToken: cancellationToken);
         }
 
