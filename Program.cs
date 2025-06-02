@@ -31,7 +31,7 @@ namespace ConflictResolutionBot
                     return;
                 }
 
-                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "";
                 botClient = new TelegramBotClient(botToken);
 
                 var receiverOptions = new ReceiverOptions
@@ -330,8 +330,8 @@ namespace ConflictResolutionBot
                       "Цель: показать упражнения для развития навыков сотрудничества и разрешения конфликтов.\n\n" +
                       "5. 🔸 *«Детская психология»*\n" +
                       "Цель: описать этапы психологического развития детей, включая аспекты, связанные с конфликтами.\n\n" +
-                      "6. 🔸 *«Формирование конфликтологической компетентности»*\n" +
-                      "Цель: предоставление возможности участникам тренинга получить опыт конструктивного решения конфликтных ситуаций.\n\n" +
+                      "6. 🔸 *«Психологические игры для детей»*\n" +
+                      "Цель: показать разнообразные игры, способствующие правильному разностороннему психологическому развитию детей.\n\n" +
                       "📥 Хотите скачать какую-нибудь методичку? Выберите её номер ниже.",
                 parseMode: ParseMode.Markdown,
                 replyMarkup: inlineKeyboard,
@@ -390,7 +390,7 @@ namespace ConflictResolutionBot
                         break;
                     case "callback12":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
-                        filePath = "/root/mediator/Literature/Психология - yчебник для студентов высших педагогических заведений.pdf";
+                        filePath = "/root/mediator/Literature/Психология - yчебник.pdf";
                         break;
                     case "callback13":
                         await botClient.AnswerCallbackQuery(e.Id, showAlert: false);
