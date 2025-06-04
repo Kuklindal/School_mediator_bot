@@ -106,11 +106,9 @@ public class FileSearchService
         {
             if (sentences[i].Contains(query, StringComparison.OrdinalIgnoreCase))
             {
-             //   var nextSentence = i < sentences.Length - 1 ? sentences[i + 1] : "";
                 return new FileSearchResult
                 {
                     FileName = fileName,
-                //    Excerpt = $"{sentences[i].Trim()} {nextSentence.Trim()}",
                     Excerpt = $"{sentences[i].Trim()}",
                     PageNumber = page
                 };

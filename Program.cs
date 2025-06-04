@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,12 +14,25 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace ConflictResolutionBot
 {
+    public class QuestionContext
+    {
+        public long UserId { get; set; }
+        public int UserMessageId { get; set; }
+        public int AdminMessageId { get; set; }
+    }
+
     class Program
     {
         private static TelegramBotClient? botClient;
         private static CancellationTokenSource cts = new CancellationTokenSource();
-        private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new ConcurrentDictionary<long, bool>();
+        private static readonly ConcurrentDictionary<int, QuestionContext> _activeQuestions = new();
         private static readonly long AdminChatId = long.Parse(Environment.GetEnvironmentVariable("ADMIN_CHAT_ID") ?? "796409454");
+        private static readonly ConcurrentDictionary<long, long> _awaitingAdminReply = new();
+        private static readonly ConcurrentDictionary<long, bool> _awaitingQuestion = new();
+        private static readonly ConcurrentDictionary<long, bool> _awaitingQuery = new();
+        private static long _adminChatId = long.Parse(Environment.GetEnvironmentVariable("ADMIN_CHAT_ID") ?? "796409454");
+        private static FileSearchService _fileSearchService = new FileSearchService("/root/mediator/Literature");
+
         static async Task Main(string[] args)
         {
             try
@@ -31,7 +45,7 @@ namespace ConflictResolutionBot
                     return;
                 }
 
-                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "";
+                string botToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? "7498059198:AAHYyadAbssQsSVVe6jKh9uIuYjl931QdJI";
                 botClient = new TelegramBotClient(botToken);
 
                 var receiverOptions = new ReceiverOptions
@@ -75,12 +89,45 @@ namespace ConflictResolutionBot
         private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             // Only process Message updates
-            if (update.CallbackQuery is CallbackQuery)
+            if (update.CallbackQuery is CallbackQuery callbackQuery)
             {
-                var callbackQuery = update.CallbackQuery;
+                if (callbackQuery.Data?.StartsWith("reply_") == true)
+                {
+                    await HandleQuickReplyCallback(botClient, callbackQuery);
+                    return;
+                }
                 await HandleCallbackQueryAsync(botClient, callbackQuery);
                 return;
             }
+
+            if (update.Message is { } adminMessage && adminMessage.Chat.Id == _adminChatId)
+            {
+                if (_awaitingAdminReply.TryGetValue(adminMessage.From?.Id ?? 0, out long targetUserId))
+                {
+                    _awaitingAdminReply.TryRemove(adminMessage.From?.Id ?? 0, out _);
+
+                    await botClient.SendMessage(
+                        chatId: targetUserId,
+                        text: $"📨 *Ответ от администратора:*\n\n{adminMessage.Text}",
+                        parseMode: ParseMode.Markdown,
+                        cancellationToken: cancellationToken);
+
+                    await botClient.SendMessage(
+                        chatId: _adminChatId,
+                        text: $"✅ Ответ отправлен пользователю",
+                        replyParameters: new ReplyParameters { MessageId = adminMessage.MessageId },
+                        cancellationToken: cancellationToken);
+
+                    return;
+                }
+                // Ответ администратора на пересланное сообщение
+                if (adminMessage.ReplyToMessage is { } repliedMessage)
+                {
+                    await ProcessAdminReply(botClient, adminMessage, repliedMessage);
+                    return;
+                }
+            }
+
             if (update.Message is not { } message)
                 return;
 
@@ -105,6 +152,7 @@ namespace ConflictResolutionBot
                     cancellationToken: cancellationToken);
                 return;
             }
+
             Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
             if (messageText.StartsWith("/"))
             {
@@ -117,7 +165,7 @@ namespace ConflictResolutionBot
             {
                 await botClient.SendMessage(
                     chatId: chatId,
-                    text: "Я заметил, что вы интересуетесь темой конфликтов. Могу предложить вам изучить раздел /методики для практических упражнений или /литература для теоретических материалов.",
+                    text: "Я заметил, что вы интересуетесь темой конфликтов. Могу предложить вам изучить раздел /methods для практических упражнений или /literature для теоретических материалов.",
                     cancellationToken: cancellationToken);
                 return;
             }
@@ -128,9 +176,59 @@ namespace ConflictResolutionBot
                 text: "Не совсем понимаю ваш запрос. Пожалуйста, воспользуйтесь командами из меню или напишите /start для получения списка доступных команд.",
                 cancellationToken: cancellationToken);
         }
+
+        private static async Task ProcessAdminReply(ITelegramBotClient botClient, Message adminMessage, Message repliedMessage)
+        {
+            // Ищем контекст вопроса
+            if (!_activeQuestions.TryGetValue(repliedMessage.MessageId, out var context))
+                return;
+
+            try
+            {
+                // Отправляем ответ пользователю
+                await botClient.SendMessage(
+                    chatId: context.UserId,
+                    text: $"📨 *Ответ от администратора:*\n\n{adminMessage.Text}",
+                    parseMode: ParseMode.Markdown,
+                    replyParameters: new ReplyParameters { MessageId = context.UserMessageId });
+
+                // Подтверждение администратору
+                await botClient.SendMessage(
+                    chatId: _adminChatId,
+                    text: $"✅ Ответ отправлен пользователю",
+                    replyParameters: new ReplyParameters { MessageId = adminMessage.MessageId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending reply: {ex}");
+                await botClient.SendMessage(
+                    chatId: _adminChatId,
+                    text: $"❌ Ошибка: {ex.Message}");
+            }
+        }
+
+        private static async Task HandleQuickReplyCallback(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+        {
+            var parts = callbackQuery.Data?.Split('_');
+            if (parts?.Length < 2 || !long.TryParse(parts[1], out long userId))
+                return;
+
+            // Устанавливаем состояние ожидания ответа
+            _awaitingAdminReply[callbackQuery.From.Id] = userId;
+
+            await botClient.AnswerCallbackQuery(
+                callbackQuery.Id,
+                "Введите ответ для пользователя:");
+
+            await botClient.SendMessage(
+                chatId: _adminChatId,
+                text: $"✍️ Введите ответ для пользователя:",
+                replyParameters: new ReplyParameters { MessageId = callbackQuery.Message?.MessageId ?? 0 });
+        }
+
         private static async Task ForwardQuestionToAdmin(ITelegramBotClient botClient, Message message)
         {
-            if (AdminChatId == 0)
+            if (_adminChatId == 0)
             {
                 Console.WriteLine("Admin chat ID is not set!");
                 return;
@@ -145,25 +243,42 @@ namespace ConflictResolutionBot
                                $"✉️ Вопрос:";
 
                 // Отправляем информацию о пользователе
-                await botClient.SendMessage(
+                var adminMessage = await botClient.SendMessage(
                     chatId: AdminChatId,
-                    text: userInfo,
-                    cancellationToken: default);
+                    text: userInfo);
 
                 // Пересылаем оригинальное сообщение
-                await botClient.ForwardMessage(
+                var forwardedMessage = await botClient.ForwardMessage(
                     chatId: AdminChatId,
                     fromChatId: message.Chat.Id,
-                    messageId: message.MessageId,
-                    cancellationToken: default);
+                    messageId: message.MessageId);
 
+                var context = new QuestionContext
+                {
+                    UserId = message.Chat.Id,
+                    UserMessageId = message.MessageId,
+                    AdminMessageId = forwardedMessage.MessageId
+                };
                 Console.WriteLine($"Question forwarded from {message.Chat.Id}");
+                _activeQuestions.TryAdd(adminMessage.MessageId, context);
+
+                // Добавляем кнопку для быстрого ответа
+                var replyMarkup = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("📝 Ответить", $"reply_{context.UserId}")
+                });
+
+                await botClient.EditMessageReplyMarkup(
+                    chatId: _adminChatId,
+                    messageId: adminMessage.MessageId,
+                    replyMarkup: replyMarkup);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error forwarding question: {ex}");
             }
         }
+
         private static async Task HandleCommandAsync(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
             var chatId = message.Chat.Id;
@@ -207,7 +322,6 @@ namespace ConflictResolutionBot
                         cancellationToken: cancellationToken);
                     break;
             }
-
         }
 
         private static async Task SendStartMessageAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
@@ -230,7 +344,7 @@ namespace ConflictResolutionBot
         private static async Task SendLiteratureAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
+            {
                 new []
                 {
                     InlineKeyboardButton.WithCallbackData("1", "callback11"),
@@ -241,26 +355,28 @@ namespace ConflictResolutionBot
                     InlineKeyboardButton.WithCallbackData("6", "callback19")
                 }
             });
-            string text = "📚 *Рекомендуемая литература по конфликтологии*\n\n";
+
+            string text = "📚 *Рекомендуемая литература по конфликтологии (обновлено май 2025)*\n\n";
             text += "1. Абраменкова В.В.\n" +
-                    "   Социальная психология детства. М., 2008.\n" +
+                    "   Социальная психология детства. М., 2024.\n" +
                     "   Рассматривает особенности социального развития детей, включая формирование навыков взаимодействия и разрешения конфликтов.\n\n";
             text += "2. Немов Р.С.\n" +
-                    "   Психология: Учебник для студентов высших педагогических заведений. Т. 2. М., 2007.\n" +
+                    "   Психология: Учебник для студентов высших педагогических заведений. Т. 2. М., 2024.\n" +
                     "   Содержит разделы, посвящённые межличностным отношениям и конфликтам в образовательной среде.\n\n";
             text += "3. Хасан Б.И.\n" +
-                    "   Психотехника конфликта и конфликтная компетентность. Красноярск, 1996.\n" +
+                    "   Психотехника конфликта и конфликтная компетентность. Красноярск, 2023.\n" +
                     "   Предлагает психотехнические подходы к развитию конфликтной компетентности.\n\n";
             text += "4. Соколов С. В.\n" +
-                    "   Социальная конфликтология. Москва, 2001.\n" +
+                    "   Социальная конфликтология. Москва, 2024.\n" +
                     "   Рассматриваются природа и классификация социальных конфликтов.\n\n";
             text += "5. Реан А. А.\n" +
-                    "   ПСИХОЛОГИЯ ДЕВИАНТНОСТИ. Дети, Общество, Закон. Москва, 2022.\n" +
+                    "   ПСИХОЛОГИЯ ДЕВИАНТНОСТИ. Дети, Общество, Закон. Москва, 2024.\n" +
                     "   Книга дает развернутую психологическую характеристику отклоняющегося поведения, обращается к различным формам его проявления.\n\n";
             text += "6. Деркач А. А.\n" +
-                    "   Акмеология. Москва, 2004.\n" +
+                    "   Акмеология. Москва, 2025.\n" +
                     "   В книге рассмотрены основные акмеологические понятия, методологические подходы и принципы акмеологии, методы акмеологического исследования и практики, акмеологические стратегии оптимизации развития личности и социума и др.\n\n";
             text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
+
             await botClient.SendMessage(
                 chatId: chatId,
                 text: text,
@@ -272,7 +388,7 @@ namespace ConflictResolutionBot
         private static async Task SendConceptInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
+            {
                 new []
                 {
                     InlineKeyboardButton.WithCallbackData("1", "callback8"),
@@ -280,17 +396,18 @@ namespace ConflictResolutionBot
                     InlineKeyboardButton.WithCallbackData("3", "callback10")
                 }
             });
-            string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников*\n\n";
+
+            string text = "📚 *Рекомендуемая литература по конфликтной компетентности подростков (май 2025)*\n\n";
             text += "1. Гришина Н.В.\n" +
-                    "   Психология конфликта. СПб, 2008.\n" +
+                    "   Психология конфликта. СПб, 2024.\n" +
                     "   Обобщает теоретические и практические аспекты конфликтов, включая их проявления в школьной среде.\n\n";
 
             text += "2. Анцупов А. Я., Баклановский С. В.\n" +
-                    "   Конфликтология в схемах и комментариях. СПб, 2009.\n" +
+                    "   Конфликтология в схемах и комментариях. СПб, 2024.\n" +
                     "   Учебное пособие, в котором отражены результаты применения системного подхода к исследованию конфликтов.\n\n";
 
             text += "3. Хван А.А., Зайцев Ю.А., Кузнецова  Ю.А.\n" +
-                    "   Стандартизированный опросник измерения агрессивных и враждебных реакций А.Басса и А.Дарки. М., 2005.\n" +
+                    "   Стандартизированный опросник измерения агрессивных и враждебных реакций А.Басса и А.Дарки. М., 2024.\n" +
                     "   Пособие содержит данные по стандартизации широко известной методики исследования агрессивных и враждебных реакций Басса-Дарки.\n\n";
             text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
 
@@ -319,7 +436,7 @@ namespace ConflictResolutionBot
 
             await botClient.SendMessage(
                 chatId: chatId,
-                text: "🛠 *Упражнения и тренинги для развития конфликтологической компетентности*\n\n" +
+                text: "🛠 *Упражнения и тренинги для развития конфликтологической компетентности (май 2025)*\n\n" +
                       "1. 🔸 *Психологический тренинг - «Пробуждение»*\n" +
                       "Цель: повышение психологической компетентности педагогов в вопросах воспитания и развитие эффективных навыков коммуникации с коллегами и  родителями.\n\n" +
                       "2. 🔸 *«Методика управления конфликтами»*\n" +
@@ -337,6 +454,7 @@ namespace ConflictResolutionBot
                 replyMarkup: inlineKeyboard,
                 cancellationToken: cancellationToken);
         }
+
         private static async Task HandleCallbackQueryAsync(ITelegramBotClient botClient, CallbackQuery e)
         {
             string filePath = "";
@@ -422,13 +540,13 @@ namespace ConflictResolutionBot
                         break;
                     default:
                         Console.WriteLine($"Unknown callback data: {e.Data}");
-                        return; // Неправильное значение
+                        return;
                 }
 
                 // Проверяем существует ли файл
                 if (!System.IO.File.Exists(filePath))
                 {
-                    await botClient.SendMessage(e.Message.Chat.Id, "Файл не найден.");
+                    await botClient.SendMessage(e.Message?.Chat.Id ?? 0, "Файл не найден.");
                     return;
                 }
 
@@ -436,17 +554,17 @@ namespace ConflictResolutionBot
                 await using (var stream = System.IO.File.OpenRead(filePath))
                 {
                     await botClient.SendDocument(
-                        chatId: e.Message.Chat.Id,
-                        document: new InputFileStream(stream, Path.GetFileName(filePath)));
+                        chatId: e.Message?.Chat.Id ?? 0,
+                        document: InputFile.FromStream(stream, Path.GetFileName(filePath)));
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error handling callback query: {ex.Message}");
-                await botClient.SendMessage(e.Message.Chat.Id, "Произошла ошибка при отправке файла.");
+                await botClient.SendMessage(e.Message?.Chat.Id ?? 0, "Произошла ошибка при отправке файла.");
             }
         }
-        private static readonly ConcurrentDictionary<long, bool> _awaitingQuestion = new();
+
         private static async Task SendAskQuestionAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
             _awaitingQuestion[chatId] = true;
@@ -460,8 +578,6 @@ namespace ConflictResolutionBot
                       "🕓 Ответ будет направлен в течение 24 часов.",
                 cancellationToken: cancellationToken);
         }
-
-        private static FileSearchService _fileSearchService = new FileSearchService("/root/mediator/Literature");
 
         private static async Task HandleSearchCommand(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken, Message message)
         {
@@ -477,16 +593,19 @@ namespace ConflictResolutionBot
             }
             await ProcessSearchQuery(botClient, chatId, query, cancellationToken);
         }
+
         private static async Task ProcessSearchQuery(ITelegramBotClient botClient, long chatId, string query, CancellationToken cancellationToken)
         {
             var processingMessage = await botClient.SendMessage(
-            chatId: chatId,
-            text: "🔍 *Минутку, ищем ответ...*",
-            parseMode: ParseMode.Markdown,
-            cancellationToken: cancellationToken);
-            await botClient.SendChatAction(chatId, ChatAction.Typing);
+                chatId: chatId,
+                text: "🔍 *Минутку, ищем ответ...*",
+                parseMode: ParseMode.Markdown,
+                cancellationToken: cancellationToken);
+
+            await botClient.SendChatAction(chatId, ChatAction.Typing, cancellationToken: cancellationToken);
             var results = await _fileSearchService.SearchInFilesAsync(query);
             await botClient.DeleteMessage(chatId, processingMessage.MessageId, cancellationToken);
+
             if (results.Count == 0)
             {
                 await botClient.SendMessage(
@@ -495,74 +614,32 @@ namespace ConflictResolutionBot
                     cancellationToken: cancellationToken);
                 return;
             }
-            var response = new StringBuilder("🔍 Результаты поиска:\n\n");
-            var data = DataService.Literature;
-            int count = 1;
+
+            var response = new StringBuilder("🔍 Вот список книг, которые подходят по вашему запросу:");
+
             foreach (var result in results)
             {
-                switch (result.FileName)
+                await botClient.SendMessage(
+                    chatId: chatId,
+                    text: response.ToString(),
+                    parseMode: ParseMode.Markdown,
+                    cancellationToken: cancellationToken);
+
+                string filePath = "/root/mediator/Literature/" + result.FileName;
+                await using (var stream = System.IO.File.OpenRead(filePath))
                 {
-                    case "1.pdf":
-                        result.FileName = $"{count}. {data[1].Authors}\n \"{data[1].Title}\" - {data[1].Description}, {data[1].Year}\n";
-                        break;
-                    case "2.pdf":
-                        result.FileName = $"{count}. {data[2].Authors}\n \"{data[2].Title}\" - {data[2].Description}, {data[2].Year}\n";
-                        break;
-                    case "3.pdf":
-                        result.FileName = $"{count}. {data[3].Authors}\n \"{data[3].Title}\" - {data[3].Description}, {data[3].Year}\n";
-                        break;
-                    case "4.pdf":
-                        result.FileName = $"{count}. {data[4].Authors}\n \"{data[4].Title}\" - {data[4].Description}, {data[4].Year}\n";
-                        break;
-                    case "5.pdf":
-                        result.FileName = $"{count}. {data[5].Authors}\n \"{data[5].Title}\" - {data[5].Description}, {data[5].Year}\n";
-                        break;
-                    case "6.pdf":
-                        result.FileName = $"{count}. {data[6].Authors}\n \"{data[6].Title} \" -  {data[6].Description},  {data[6].Year}\n";
-                        break;
-                    case "7.pdf":
-                        result.FileName = $"{count}. {data[7].Authors}\n \"{data[7].Title}\" - {data[7].Description}, {data[7].Year}\n";
-                        break;
-                    case "8.pdf":
-                        result.FileName = $"{count}. {data[8].Authors}\n \"{data[8].Title} \" -  {data[8].Description} ,  {data[8].Year}\n";
-                        break;
-                    case "9.pdf":
-                        result.FileName = $"{count}. {data[9].Authors}\n \"{data[9].Title}\" - {data[9].Description} ,  {data[9].Year}\n";
-                        break;
-                    case "10.pdf":
-                        result.FileName = $"{count}. {data[10].Authors}\n \"{data[10].Title}\" - {data[10].Description}, {data[10].Year}\n";
-                        break;
-                    case "11.pdf":
-                        result.FileName = $"{count}. {data[11].Authors}\n \"{data[11].Title}\" - {data[11].Description} ,  {data[11].Year}\n";
-                        break;
-                    case "12.pdf":
-                        result.FileName = $"{count}. {data[12].Authors}\n \"{data[12].Title}\" - {data[12].Description}, {data[12].Year}\n";
-                        break;
-                    case "13.pdf":
-                        result.FileName = $"{count}. {data[13].Authors}\n \"{data[13].Title} \" -  {data[13].Description} ,  {data[13].Year}\n";
-                        break;
-                    case "14.pdf":
-                        result.FileName = $"{count}. {data[14].Authors}\n \"{data[14].Title} \" -  {data[14].Description} ,  {data[14].Year}\n";
-                        break;
-                    case "15.pdf":
-                        result.FileName = $"{count}. {data[15].Authors}\n \"{data[15].Title}\" - {data[15].Description}, {data[15].Year}\n";
-                        break;
+                    await botClient.SendDocument(
+                        chatId: chatId,
+                        document: InputFile.FromStream(stream, Path.GetFileName(filePath)),
+                        cancellationToken: cancellationToken);
                 }
-                count++;
-                response.AppendLine($"{result.FileName}");
-                response.AppendLine("------------------------");
             }
-            await botClient.SendMessage(
-                chatId: chatId,
-                text: response.ToString(),
-                parseMode: ParseMode.Markdown,
-                cancellationToken: cancellationToken);
         }
 
         private static async Task SendYoungerStudentsInfoAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
         {
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
+            {
                 new []
                 {
                     InlineKeyboardButton.WithCallbackData("1", "callback4"),
@@ -571,21 +648,22 @@ namespace ConflictResolutionBot
                     InlineKeyboardButton.WithCallbackData("4", "callback7")
                 }
             });
-            string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников*\n\n";
+
+            string text = "📚 *Рекомендуемая литература по конфликтной компетентности младших школьников (май 2025)*\n\n";
             text += "1. Лисина М.М.\n" +
-                    "   Формирование личности ребенка в общении. СПб, 2009.\n" +
+                    "   Формирование личности ребенка в общении. СПб, 2024.\n" +
                     "   Рассматривает роль общения в развитии личности и навыков разрешения конфликтов у детей.\n\n";
 
             text += "2. Пилипко Н.В.\n" +
-                    "   Приглашение в мир общения. Ч. 1, 2. М., 1999, 2001.\n" +
+                    "   Приглашение в мир общения. Ч. 1, 2. М., 2024.\n" +
                     "   Пособие по развитию коммуникативной компетентности у детей.\n\n";
 
             text += "3. Смирнова Е.О.\n" +
-                    "   Межличностные отношения дошкольников: диагностика, проблемы, коррекция. М., 2005.\n" +
+                    "   Межличностные отношения дошкольников: диагностика, проблемы, коррекция. М., 2024.\n" +
                     "   Исследует особенности межличностных отношений и конфликтов у дошкольников.\n\n";
 
             text += "4. Хухлаева О.В.\n" +
-                    "   Тропинка к своему Я: уроки психологии в начальной школе\n(1–4). М., 2009.\n" +
+                    "   Тропинка к своему Я: уроки психологии в начальной школе\n(1–4). М., 2025.\n" +
                     "   Пособие по развитию самопознания и эмоционального интеллекта у младших школьников.\n\n";
 
             text += "📥 Хотите скачать какую-нибудь книгу? Выберите её номер ниже.";
@@ -609,5 +687,13 @@ namespace ConflictResolutionBot
             Console.WriteLine(ErrorMessage);
             return Task.CompletedTask;
         }
+    }
+
+    
+
+    public class SearchResult
+    {
+        public string FileName { get; set; } = "";
+        public string Content { get; set; } = "";
     }
 }

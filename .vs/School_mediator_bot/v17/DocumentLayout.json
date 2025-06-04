@@ -68,9 +68,10 @@
               "RelativeDocumentMoniker": "DataService.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\DataService.cs",
               "RelativeToolTip": "DataService.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAE8BAAAAAAAA",
+              "ViewState": "AQIAADcBAAAAAAAAAAAIwE8BAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-15T08:00:40.967Z"
+              "WhenOpened": "2025-05-15T08:00:40.967Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -80,7 +81,7 @@
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AQIAAAEAAAAAAAAAAAAAACEAAABWAAAA",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAACAAAAB3AAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-15T07:43:17.168Z",
               "EditorCaption": ""
@@ -93,9 +94,10 @@
               "RelativeDocumentMoniker": "FileSearchService.cs",
               "ToolTip": "C:\\Users\\79025\\source\\repos\\2 \u043A\u0443\u0440\u0441\\3 \u0441\u0435\u043C\u0435\u0441\u0442\u0440\\School_mediator_bot\\FileSearchService.cs",
               "RelativeToolTip": "FileSearchService.cs",
-              "ViewState": "AQIAAAYAAAAAAAAAAAAAAHoAAAAAAAAA",
+              "ViewState": "AQIAAGYAAAAAAAAAAAAAAGwAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-15T09:33:02.9Z"
+              "WhenOpened": "2025-05-15T09:33:02.9Z",
+              "EditorCaption": ""
             }
           ]
         }
