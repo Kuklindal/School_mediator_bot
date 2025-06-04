@@ -615,16 +615,14 @@ namespace ConflictResolutionBot
                 return;
             }
 
-            var response = new StringBuilder("🔍 Вот список книг, которые подходят по вашему запросу:");
-
+            var response = new StringBuilder("🔍 Вот книги, которые вам подойдут:");
+            await botClient.SendMessage(
+                        chatId: chatId,
+                        text: response.ToString(),
+                        parseMode: ParseMode.Markdown,
+                        cancellationToken: cancellationToken);
             foreach (var result in results)
             {
-                await botClient.SendMessage(
-                    chatId: chatId,
-                    text: response.ToString(),
-                    parseMode: ParseMode.Markdown,
-                    cancellationToken: cancellationToken);
-
                 string filePath = "/root/mediator/Literature/" + result.FileName;
                 await using (var stream = System.IO.File.OpenRead(filePath))
                 {
